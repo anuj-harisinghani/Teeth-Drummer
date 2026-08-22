@@ -1,0 +1,22 @@
+# Build directories
+build/
+bin/
+lib/
+out/
+.ninja_*
+ninja.log
+
+# IDE & Editor files
+.vs/
+.vscode/
+*.vcxproj*
+*.sln
+*.user
+.idea/
+*.swp
+*.DS_Store
+
+# Temporary & Artifact directories
+scratch/
+_deps/
+*.teethprofile.bak
