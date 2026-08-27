@@ -118,8 +118,8 @@ namespace TeethDrummer
                 // Pad Name
                 g.setColour(juce::Colours::white);
                 g.setFont(juce::Font(16.0f, juce::Font::bold));
-                g.drawText(juce::String(getDrumPadName(pad).data()), 
-                           padRect.removeFromTop(padRect.getHeight() * 0.55f),
+                g.drawText(juce::String(getDrumPadName(pad).data()),
+                           padRect.withHeight(padRect.getHeight() * 0.55f),
                            juce::Justification::centred);
 
                 // MIDI Note info

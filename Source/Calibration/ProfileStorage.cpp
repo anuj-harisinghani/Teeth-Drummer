@@ -5,9 +5,9 @@ namespace TeethDrummer
     juce::String ProfileStorage::serializeProfile(const UserProfile& profile)
     {
         auto* obj = new juce::DynamicObject();
-        obj->setProperty("profileName", profile.profileName);
+        obj->setProperty("profileName", juce::String(profile.profileName));
 
-        auto* padsArray = new juce::Array<juce::var>();
+        juce::Array<juce::var> padsArray;
         for (const auto& proto : profile.prototypes)
         {
             auto* padObj = new juce::DynamicObject();
@@ -22,10 +22,10 @@ namespace TeethDrummer
             padObj->setProperty("zeroCrossingRate", proto.zeroCrossingRate);
             padObj->setProperty("decaySlope", proto.decaySlope);
 
-            padsArray->add(juce::var(padObj));
+            padsArray.add(juce::var(padObj));
         }
 
-        obj->setProperty("prototypes", juce::var(padsArray));
+        obj->setProperty("prototypes", padsArray);
         return juce::JSON::toString(juce::var(obj), false);
     }
 
