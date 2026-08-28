@@ -11,47 +11,56 @@ namespace TeethDrummer
 
     void CalibrationManager::startCalibration(DrumPad pad, int targetHits)
     {
-        std::lock_guard<std::mutex> lock(calibrationMutex);
-        currentlyCalibratingPad = pad;
-        targetHitCount = std::clamp(targetHits, 3, 20);
+        hitQueue.reset(); // discard any stale hits left over from a previous session
         recordedHits.clear();
-        recordedHits.reserve(targetHitCount);
+        targetHitCount = std::clamp(targetHits, 3, 20);
+        recordedHits.reserve(static_cast<size_t>(targetHitCount));
+        calibratingPad.store(pad, std::memory_order_relaxed);
 
         if (onStateChanged)
-            onStateChanged(currentlyCalibratingPad, 0, targetHitCount, false);
+            onStateChanged(pad, 0, targetHitCount, false);
     }
 
     void CalibrationManager::cancelCalibration()
     {
-        std::lock_guard<std::mutex> lock(calibrationMutex);
-        const auto prevPad = currentlyCalibratingPad;
-        currentlyCalibratingPad = DrumPad::None;
+        const auto prevPad = calibratingPad.exchange(DrumPad::None, std::memory_order_relaxed);
         recordedHits.clear();
+        hitQueue.reset();
 
         if (onStateChanged)
             onStateChanged(prevPad, 0, targetHitCount, false);
     }
 
-    bool CalibrationManager::processCalibrationHit(const FeatureVector& feats)
+    bool CalibrationManager::queueCalibrationHit(const FeatureVector& feats) noexcept
     {
-        std::lock_guard<std::mutex> lock(calibrationMutex);
-        if (currentlyCalibratingPad == DrumPad::None)
+        if (calibratingPad.load(std::memory_order_relaxed) == DrumPad::None)
             return false;
 
-        recordedHits.push_back(feats);
-        const int currentHits = static_cast<int>(recordedHits.size());
-        const bool isFinished = (currentHits >= targetHitCount);
+        return hitQueue.push(feats);
+    }
 
-        if (onStateChanged)
-            onStateChanged(currentlyCalibratingPad, currentHits, targetHitCount, isFinished);
-
-        if (isFinished)
+    void CalibrationManager::pumpCalibrationQueue()
+    {
+        FeatureVector feats;
+        while (hitQueue.pop(feats))
         {
-            finalizeCalibration(currentlyCalibratingPad);
-            currentlyCalibratingPad = DrumPad::None;
-        }
+            const DrumPad pad = calibratingPad.load(std::memory_order_relaxed);
+            if (pad == DrumPad::None)
+                continue; // calibration was cancelled after this hit was queued - discard it
 
-        return true;
+            recordedHits.push_back(feats);
+            const int currentHits = static_cast<int>(recordedHits.size());
+            const bool isFinished = (currentHits >= targetHitCount);
+
+            if (onStateChanged)
+                onStateChanged(pad, currentHits, targetHitCount, isFinished);
+
+            if (isFinished)
+            {
+                finalizeCalibration(pad);
+                calibratingPad.store(DrumPad::None, std::memory_order_relaxed);
+            }
+        }
     }
 
     void CalibrationManager::finalizeCalibration(DrumPad pad)
@@ -93,7 +102,6 @@ namespace TeethDrummer
 
     void CalibrationManager::clearPadCalibration(DrumPad pad)
     {
-        std::lock_guard<std::mutex> lock(calibrationMutex);
         if (pad == DrumPad::None) return;
 
         auto profile = classifierEngine.getProfile();
@@ -110,13 +118,12 @@ namespace TeethDrummer
 
     void CalibrationManager::resetAll()
     {
-        std::lock_guard<std::mutex> lock(calibrationMutex);
         classifierEngine.resetToDefaults();
         recordedHits.clear();
-        currentlyCalibratingPad = DrumPad::None;
+        hitQueue.reset();
+        calibratingPad.store(DrumPad::None, std::memory_order_relaxed);
 
         if (onStateChanged)
             onStateChanged(DrumPad::None, 0, targetHitCount, false);
     }
 }
-

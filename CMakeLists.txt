@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(TeethDrummer VERSION 1.0.0 LANGUAGES C CXX)
+project(TeethDrummer VERSION 0.101 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -72,6 +72,7 @@ target_compile_definitions(TeethDrummer PRIVATE
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
+    APP_VERSION_STRING=\"v${PROJECT_VERSION}\"
 )
 
 target_link_libraries(TeethDrummer PRIVATE

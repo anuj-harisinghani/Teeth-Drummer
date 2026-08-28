@@ -176,11 +176,8 @@ namespace TeethDrummer
                 // 2. Extract acoustic features
                 const FeatureVector feats = featureExtractor.extract(analysisBuffer.data(), analysisBuffer.size());
 
-                // 3. Check if calibration is active
-                if (calibrationManager.isCalibrating())
-                {
-                    calibrationManager.processCalibrationHit(feats);
-                }
+                // 3. Queue hit for calibration if active (lock-free, non-blocking)
+                calibrationManager.queueCalibrationHit(feats);
 
                 // 4. Classify drum hit
                 float confidence = 0.0f;

@@ -29,6 +29,7 @@ namespace TeethDrummer
         CalibrationWizardView calibrationWizard;
 
         juce::Label headerLabel;
+        juce::Label versionLabel;
         juce::Label subtitleLabel;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TeethDrummerAudioProcessorEditor)

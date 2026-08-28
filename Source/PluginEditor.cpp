@@ -15,6 +15,12 @@ namespace TeethDrummer
         headerLabel.setColour(juce::Label::textColourId, juce::Colours::white);
         addAndMakeVisible(headerLabel);
 
+        versionLabel.setText(APP_VERSION_STRING, juce::dontSendNotification);
+        versionLabel.setFont(juce::Font(11.0f, juce::Font::bold));
+        versionLabel.setColour(juce::Label::textColourId, juce::Colour(0xff6b7280));
+        versionLabel.setJustificationType(juce::Justification::centredLeft);
+        addAndMakeVisible(versionLabel);
+
         subtitleLabel.setText("Real-Time Oral Percussion Audio-to-MIDI Trigger", juce::dontSendNotification);
         subtitleLabel.setFont(juce::Font(12.0f, juce::Font::plain));
         subtitleLabel.setColour(juce::Label::textColourId, juce::Colour(0xff9ca3af));
@@ -44,6 +50,9 @@ namespace TeethDrummer
 
     void TeethDrummerAudioProcessorEditor::timerCallback()
     {
+        // Drain hits queued by the audio thread during calibration
+        processorRef.getCalibrationManager().pumpCalibrationQueue();
+
         // Poll telemetry queue for live hits
         TriggerTelemetryEvent event;
         while (processorRef.getTelemetryQueue().pop(event))
@@ -69,7 +78,9 @@ namespace TeethDrummer
 
         // Header
         auto headerArea = bounds.removeFromTop(44);
-        headerLabel.setBounds(headerArea.removeFromTop(24));
+        auto titleRow = headerArea.removeFromTop(24);
+        headerLabel.setBounds(titleRow.removeFromLeft(200));
+        versionLabel.setBounds(titleRow.removeFromLeft(60));
         subtitleLabel.setBounds(headerArea);
 
         bounds.removeFromTop(12);

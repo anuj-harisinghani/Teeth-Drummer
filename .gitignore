@@ -20,4 +20,6 @@ ninja.log
 scratch/
 _deps/
 *.teethprofile.bak
+DevContext.md
+WIP.md
 
